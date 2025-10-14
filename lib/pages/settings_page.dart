@@ -28,10 +28,10 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  void _deleteAccount(String email, String password) async {
+  void _deleteAccount(String password) async {
     setState(() => isLoading = true);
     try {
-      await authService.value.deleteAccount(email: email, password: password);
+      await authService.value.deleteAccount(password: password);
       Navigator.pushReplacementNamed(context, '/signin');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Account deleted successfully.")),
@@ -40,56 +40,83 @@ class _SettingsPageState extends State<SettingsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: ${e.message}")),
       );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
     } finally {
       setState(() => isLoading = false);
     }
   }
 
   void _confirmDeleteAccount() {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  String? errorText; // store error message
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Delete Account"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("Enter your email and password to confirm:"),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(hintText: "Email"),
+  showDialog(
+    context: context,
+    builder: (ctx) {
+      return StatefulBuilder( // allows updating UI inside dialog
+        builder: (ctx, setState) => AlertDialog(
+          title: const Text(
+            "Delete Account",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Enter your password to confirm"),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  hintText: "Password",
+                  errorText: errorText, // shows red text below if not null
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.black),
+              ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(hintText: "Password"),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                final password = passwordController.text.trim();
+
+                // ✅ Validate password field
+                if (password.isEmpty) {
+                  setState(() {
+                    errorText = "Password is required";
+                  });
+                  return;
+                }
+
+                Navigator.pop(ctx); // close dialog if password valid
+                _deleteAccount(
+                  password
+                );
+              },
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            onPressed: () {
-              Navigator.pop(ctx);
-              _deleteAccount(
-                emailController.text.trim(),
-                passwordController.text.trim(),
-              );
-            },
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
-    );
-  }
+      );
+    },
+  );
+}
+
 
   Widget _settingsItem(IconData icon, String title, {VoidCallback? onTap}) {
     return Container(
