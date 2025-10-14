@@ -50,7 +50,6 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _confirmDeleteAccount() {
-  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   String? errorText; // store error message
 
@@ -74,7 +73,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: "Password",
-                  errorText: errorText, // shows red text below if not null
+                  errorText: errorText, //shows red text below if not null
                 ),
               ),
             ],
@@ -92,7 +91,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onPressed: () {
                 final password = passwordController.text.trim();
 
-                // ✅ Validate password field
+                //Validate password field
                 if (password.isEmpty) {
                   setState(() {
                     errorText = "Password is required";
